@@ -1,6 +1,6 @@
-# THIS IS NOT COMPLETE!
-
 # 🤝 Contributing to Korun.io
+
+## THIS IS NOT COMPLETE!
 
 We're thrilled you're interested in contributing to Korun.io! Your efforts, no matter how small, help us build a more secure and developer-friendly secret management platform.
 
@@ -8,8 +8,8 @@ This document outlines the guidelines and best practices for contributing to Kor
 
 ## Table of Contents
 
-- [THIS IS NOT COMPLETE!](#this-is-not-complete)
 - [🤝 Contributing to Korun.io](#-contributing-to-korunio)
+  - [THIS IS NOT COMPLETE!](#this-is-not-complete)
   - [Table of Contents](#table-of-contents)
   - [Code of Conduct](#code-of-conduct)
   - [How to Contribute](#how-to-contribute)
@@ -169,6 +169,7 @@ korun.io/
 │   ├── docker/
 │   ├── kubernetes/
 │   └── terraform/
+├── migrations/               # SQL migrations
 ├── docs/                     # Additional documentation
 ├── docker-compose.yml        # Local development setup
 ├── go.mod                    # Root Go module

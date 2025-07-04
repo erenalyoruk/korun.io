@@ -1,6 +1,6 @@
-# THIS IS NOT COMPLETE!
-
 # 🔐 Korun.io: Open-Source Secret Management for Modern DevOps
+
+## THIS IS NOT COMPLETE!
 
 ## 🛡️ Korun.io - Secured. Integrated. Open.
 
