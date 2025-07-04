@@ -1,0 +1,74 @@
+services:
+  postgres-dev:
+    image: postgres:17
+    container_name: korun-io-postgres-dev
+    environment:
+      - POSTGRES_DB=${DB_DB}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - korun-io-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: on-failure
+
+  migrate-dev:
+    image: migrate/migrate
+    command:
+      [
+        "-path",
+        "/migrations",
+        "-database",
+        "postgres://${DB_USER}:${DB_PASSWORD}@postgres-dev:5432/${DB_DB}?sslmode=disable",
+        "up",
+      ]
+    volumes:
+      - ../../../migrations:/migrations
+    depends_on:
+      postgres-dev:
+        condition: service_healthy
+    networks:
+      - korun-io-network
+    restart: no
+    stdin_open: false
+    tty: false
+    profiles:
+      - migration
+
+  secret-service-dev:
+    build:
+      context: ../../../backend
+      dockerfile: secret-service/Dockerfile.dev
+    container_name: korun-io-secret-service-dev
+    environment:
+      - ENV=${ENV}
+      - LOG_LEVEL=${LOG_LEVEL}
+      - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@postgres-dev:5432/${DB_DB}?sslmode=disable
+    ports:
+      - "8000:8080"
+    volumes:
+      - ../../../backend:/app:cached
+      - go_mod_cache:/go/pkg/mod
+    networks:
+      - korun-io-network
+    depends_on:
+      postgres-dev:
+        condition: service_healthy
+    restart: on-failure
+    stdin_open: true
+    tty: true
+
+volumes:
+  postgres_data:
+  go_mod_cache:
+
+networks:
+  korun-io-network:
+    driver: bridge

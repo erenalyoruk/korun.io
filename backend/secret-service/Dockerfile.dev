@@ -1,0 +1,42 @@
+# Use a slim, secure base image
+FROM golang:1.24-alpine
+
+# Install git and other tools needed for development
+RUN apk add --no-cache git bash curl
+
+# Set working directory to workspace root
+WORKDIR /app
+
+# Install Air for live reload
+RUN go install github.com/air-verse/air@latest
+
+# Copy workspace configuration
+COPY go.work* ./
+
+# Copy go.mod files for all modules
+COPY ./shared/go.mod ./shared/go.mod
+COPY ./secret-service/go.mod ./secret-service/go.mod
+
+# Copy go.sum files if they exist
+COPY ./shared/go.sum* ./shared/
+COPY ./secret-service/go.sum* ./secret-service/
+
+# Initialize workspace and download dependencies
+RUN go work sync
+RUN go mod download
+
+# Create tmp directory for Air builds
+RUN mkdir -p /app/secret-service/tmp
+
+# Copy source code (will be overridden by volume mounts in development)
+COPY ./shared/ ./shared/
+COPY ./secret-service/ ./secret-service/
+
+# Set working directory to the service
+WORKDIR /app/secret-service
+
+# Expose the application port
+EXPOSE 8080
+
+# Start with Air
+CMD ["air", "-c", ".air.toml"]
