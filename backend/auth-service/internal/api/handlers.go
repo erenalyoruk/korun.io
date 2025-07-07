@@ -6,15 +6,15 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"korun.io/auth-service/internal/service"
+	"korun.io/auth-service/internal/application"
 	"korun.io/shared/models"
 )
 
 type AuthHandler struct {
-	authService *service.AuthService
+	authService *application.AuthService
 }
 
-func NewAuthHandler(authService *service.AuthService) *AuthHandler {
+func NewAuthHandler(authService *application.AuthService) *AuthHandler {
 	return &AuthHandler{
 		authService: authService,
 	}
@@ -32,9 +32,9 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		switch {
 		case errors.Is(err, models.ErrAccountExists):
 			c.JSON(http.StatusConflict, gin.H{"error": "account already exists"})
-		case errors.Is(err, service.ErrInvalidEmail):
+		case errors.Is(err, application.ErrInvalidEmail):
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid email format"})
-		case errors.Is(err, service.ErrPasswordTooWeak):
+		case errors.Is(err, application.ErrPasswordTooWeak):
 			c.JSON(http.StatusBadRequest, gin.H{"error": "password is too weak"})
 		default:
 			slog.Error("Registration failed", "error", err, "email", req.Email)

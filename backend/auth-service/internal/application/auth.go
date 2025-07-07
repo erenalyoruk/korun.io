@@ -1,4 +1,4 @@
-package service
+package application
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
-	"korun.io/auth-service/internal/repository"
+	"korun.io/auth-service/internal/domain"
 	"korun.io/auth-service/internal/validators"
 	sharedConfig "korun.io/shared/config"
 	"korun.io/shared/events"
@@ -22,14 +22,14 @@ var (
 )
 
 type AuthService struct {
-	accountRepo  repository.AuthRepository
+	accountRepo  domain.AuthRepository
 	tokenService *TokenService
 	producer     messaging.Producer
 	infraConfig  *sharedConfig.InfrastructureConfig
 }
 
 func NewAuthService(
-	accountRepo repository.AuthRepository,
+	accountRepo domain.AuthRepository,
 	tokenService *TokenService,
 	producer messaging.Producer,
 	infraConfig *sharedConfig.InfrastructureConfig,

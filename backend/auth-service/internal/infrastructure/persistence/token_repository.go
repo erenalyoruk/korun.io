@@ -1,4 +1,4 @@
-package repository
+package persistence
 
 import (
 	"context"
@@ -7,7 +7,8 @@ import (
 	"log/slog"
 	"time"
 
-	"korun.io/auth-service/internal/redis"
+	"korun.io/auth-service/internal/infrastructure/redis"
+	"korun.io/auth-service/internal/domain"
 	"korun.io/shared/models"
 )
 
@@ -15,7 +16,7 @@ type RedisRefreshTokenRepository struct {
 	redisClient *redis.Client
 }
 
-func NewRedisRefreshTokenRepository(redisClient *redis.Client) RefreshTokenRepository {
+func NewRedisRefreshTokenRepository(redisClient *redis.Client) domain.RefreshTokenRepository {
 	return &RedisRefreshTokenRepository{
 		redisClient: redisClient,
 	}

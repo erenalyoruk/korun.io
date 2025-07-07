@@ -1,4 +1,4 @@
-package repository
+package persistence
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"log/slog"
 
 	"github.com/jmoiron/sqlx"
+	"korun.io/auth-service/internal/domain"
 	"korun.io/shared/models"
 )
 
@@ -15,7 +16,7 @@ type PostgresAuthRepository struct {
 	db *sqlx.DB
 }
 
-func NewPostgresAuthRepository(db *sqlx.DB) AuthRepository {
+func NewPostgresAuthRepository(db *sqlx.DB) domain.AuthRepository {
 	return &PostgresAuthRepository{db: db}
 }
 

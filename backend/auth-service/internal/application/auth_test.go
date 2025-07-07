@@ -1,4 +1,4 @@
-package service_test
+package application_test
 
 import (
 	"context"
@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/crypto/bcrypt"
+	"korun.io/auth-service/internal/application"
 	"korun.io/auth-service/internal/config"
-	"korun.io/auth-service/internal/service"
 	sharedConfig "korun.io/shared/config"
 	"korun.io/shared/events"
 	"korun.io/shared/models"
@@ -103,8 +103,8 @@ func TestAuthService_Register(t *testing.T) {
 	}
 
 	// setup services
-	tokenService := service.NewTokenService(mockRefreshTokenRepo, jwtConfig)
-	authService := service.NewAuthService(mockAccountRepo, tokenService, mockProducer, infraConfig)
+	tokenService := application.NewTokenService(mockRefreshTokenRepo, jwtConfig)
+	authService := application.NewAuthService(mockAccountRepo, tokenService, mockProducer, infraConfig)
 
 	ctx := context.Background()
 
@@ -165,7 +165,7 @@ func TestAuthService_Register(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, res)
-		assert.Equal(t, service.ErrInvalidEmail, err)
+		assert.Equal(t, application.ErrInvalidEmail, err)
 
 		mockAccountRepo.AssertNotCalled(t, "GetAccountByEmail")
 		mockRefreshTokenRepo.AssertNotCalled(t, "CreateToken")
@@ -183,7 +183,7 @@ func TestAuthService_Register(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, res)
-		assert.Equal(t, service.ErrPasswordTooWeak, err)
+		assert.Equal(t, application.ErrPasswordTooWeak, err)
 
 		mockAccountRepo.AssertNotCalled(t, "GetAccountByEmail")
 		mockRefreshTokenRepo.AssertNotCalled(t, "CreateToken")
@@ -210,8 +210,8 @@ func TestAuthService_Login(t *testing.T) {
 		},
 	}
 
-	tokenService := service.NewTokenService(mockRefreshTokenRepo, jwtConfig)
-	authService := service.NewAuthService(mockAccountRepo, tokenService, mockProducer, infraConfig)
+	tokenService := application.NewTokenService(mockRefreshTokenRepo, jwtConfig)
+	authService := application.NewAuthService(mockAccountRepo, tokenService, mockProducer, infraConfig)
 
 	ctx := context.Background()
 
@@ -315,7 +315,7 @@ func TestAuthService_Login(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, res)
-		assert.Equal(t, service.ErrInvalidEmail, err)
+		assert.Equal(t, application.ErrInvalidEmail, err)
 
 		mockAccountRepo.AssertNotCalled(t, "GetAccountByEmail")
 		mockRefreshTokenRepo.AssertNotCalled(t, "CreateToken")
@@ -342,8 +342,8 @@ func TestAuthService_RefreshToken(t *testing.T) {
 	}
 
 	// setup services
-	tokenService := service.NewTokenService(mockRefreshTokenRepo, jwtConfig)
-	authService := service.NewAuthService(mockAccountRepo, tokenService, mockProducer, infraConfig)
+	tokenService := application.NewTokenService(mockRefreshTokenRepo, jwtConfig)
+	authService := application.NewAuthService(mockAccountRepo, tokenService, mockProducer, infraConfig)
 
 	ctx := context.Background()
 
@@ -475,8 +475,8 @@ func TestAuthService_Logout(t *testing.T) {
 		},
 	}
 
-	tokenService := service.NewTokenService(mockRefreshTokenRepo, jwtConfig)
-	authService := service.NewAuthService(mockAccountRepo, tokenService, mockProducer, infraConfig)
+	tokenService := application.NewTokenService(mockRefreshTokenRepo, jwtConfig)
+	authService := application.NewAuthService(mockAccountRepo, tokenService, mockProducer, infraConfig)
 
 	ctx := context.Background()
 

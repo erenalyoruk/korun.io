@@ -1,4 +1,4 @@
-package service
+package application
 
 import (
 	"context"
@@ -10,13 +10,13 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"korun.io/auth-service/internal/config"
-	"korun.io/auth-service/internal/repository"
+	"korun.io/auth-service/internal/domain"
 	"korun.io/shared/models"
 )
 
 type TokenService struct {
 	jwtConfig        *config.JWTConfig
-	refreshTokenRepo repository.RefreshTokenRepository
+	refreshTokenRepo domain.RefreshTokenRepository
 }
 
 type TokenClaims struct {
@@ -25,7 +25,7 @@ type TokenClaims struct {
 	jwt.RegisteredClaims
 }
 
-func NewTokenService(refreshTokenRepo repository.RefreshTokenRepository, jwtConfig *config.JWTConfig) *TokenService {
+func NewTokenService(refreshTokenRepo domain.RefreshTokenRepository, jwtConfig *config.JWTConfig) *TokenService {
 	return &TokenService{
 		refreshTokenRepo: refreshTokenRepo,
 		jwtConfig:        jwtConfig,

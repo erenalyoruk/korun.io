@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"korun.io/auth-service/internal/metrics"
+	"korun.io/auth-service/internal/infrastructure/metrics"
 )
 
 type tokenBucket struct {

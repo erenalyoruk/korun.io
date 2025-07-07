@@ -13,9 +13,9 @@ import (
 	"github.com/jmoiron/sqlx"
 	"korun.io/auth-service/internal/api"
 	"korun.io/auth-service/internal/config"
-	"korun.io/auth-service/internal/redis"
-	"korun.io/auth-service/internal/repository"
-	"korun.io/auth-service/internal/service"
+	"korun.io/auth-service/internal/infrastructure/redis"
+	"korun.io/auth-service/internal/infrastructure/persistence"
+	"korun.io/auth-service/internal/application"
 	"korun.io/shared/messaging"
 
 	_ "github.com/lib/pq"
@@ -53,11 +53,11 @@ func main() {
 	}
 	defer producer.Close()
 
-	accountRepo := repository.NewPostgresAuthRepository(db)
-	tokenRepo := repository.NewRedisRefreshTokenRepository(redisClient)
+	accountRepo := persistence.NewPostgresAuthRepository(db)
+	tokenRepo := persistence.NewRedisRefreshTokenRepository(redisClient)
 
-	tokenService := service.NewTokenService(tokenRepo, &cfg.JWT)
-	authService := service.NewAuthService(accountRepo, tokenService, producer, &cfg.Infra)
+	tokenService := application.NewTokenService(tokenRepo, &cfg.JWT)
+	authService := application.NewAuthService(accountRepo, tokenService, producer, &cfg.Infra)
 
 	router := api.SetupRoutes(authService, &cfg.Server)
 

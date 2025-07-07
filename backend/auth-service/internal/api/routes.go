@@ -5,10 +5,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"korun.io/auth-service/internal/config"
-	"korun.io/auth-service/internal/service"
+	"korun.io/auth-service/internal/application"
 )
 
-func SetupRoutes(authService *service.AuthService, serverConfig *config.ServerConfig) *gin.Engine {
+func SetupRoutes(authService *application.AuthService, serverConfig *config.ServerConfig) *gin.Engine {
 	router := gin.New()
 
 	corsConfig := cors.DefaultConfig()
