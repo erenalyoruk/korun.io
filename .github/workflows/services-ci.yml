@@ -1,0 +1,74 @@
+name: Services CI
+
+on:
+  push:
+    branches:
+      - main
+      - "feature/**"
+      - "bugfix/**"
+    paths:
+      - "backend/**"
+      - "shared/**"
+
+jobs:
+  prepare-go-workspace:
+    runs-on: ubuntu-latest
+    outputs:
+      status: ${{ job.status }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+          cache-dependency-path: go.work
+
+      - name: Go Work Sync
+        run: go work sync
+        working-directory: backend
+
+      - name: Go Work Vendor
+        run: go work vendor
+        working-directory: backend
+
+  build-and-test-service:
+    needs: prepare-go-workspace
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - name: auth-service
+            path: auth-service
+            port: 8081
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+          cache-dependency-path: go.work
+
+      - name: Run Go Linters for ${{ matrix.service.name }}
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.1
+          install-mode: "goinstall"
+          working-directory: backend/${{ matrix.service.path }}
+
+      - name: Run Go Tests for ${{ matrix.service.name }}
+        run: go test ./...
+        working-directory: backend/${{ matrix.service.path }}
+
+      - name: Build Docker Image for ${{ matrix.service.name }}
+        run: |
+          docker build \
+            -t ${{ matrix.service.name }}:latest \
+            -f ${{ matrix.service.path }}/Dockerfile \
+            .
+        working-directory: backend

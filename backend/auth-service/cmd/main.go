@@ -12,10 +12,10 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"korun.io/auth-service/internal/api"
-	"korun.io/auth-service/internal/config"
-	"korun.io/auth-service/internal/infrastructure/redis"
-	"korun.io/auth-service/internal/infrastructure/persistence"
 	"korun.io/auth-service/internal/application"
+	"korun.io/auth-service/internal/config"
+	"korun.io/auth-service/internal/infrastructure/persistence"
+	"korun.io/auth-service/internal/infrastructure/redis"
 	"korun.io/shared/messaging"
 
 	_ "github.com/lib/pq"
@@ -37,21 +37,33 @@ func main() {
 		slog.Error("Failed to connect to database", "error", err)
 		os.Exit(1)
 	}
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			slog.Error("Failed to close database connection", "error", err)
+		}
+	}()
 
 	redisClient, err := redis.NewClient(&cfg.Infra.Redis)
 	if err != nil {
 		slog.Error("Failed to initialize Redis client", "error", err)
 		os.Exit(1)
 	}
-	defer redisClient.Close()
+	defer func() {
+		if err := redisClient.Close(); err != nil {
+			slog.Error("Failed to close Redis client", "error", err)
+		}
+	}()
 
 	producer, err := messaging.NewKafkaProducer(&cfg.Infra.Kafka)
 	if err != nil {
 		slog.Error("Failed to initialize Kafka producer", "error", err)
 		os.Exit(1)
 	}
-	defer producer.Close()
+	defer func() {
+		if err := producer.Close(); err != nil {
+			slog.Error("Failed to close Kafka producer", "error", err)
+		}
+	}()
 
 	accountRepo := persistence.NewPostgresAuthRepository(db)
 	tokenRepo := persistence.NewRedisRefreshTokenRepository(redisClient)

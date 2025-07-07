@@ -7,8 +7,8 @@ import (
 	"log/slog"
 	"time"
 
-	"korun.io/auth-service/internal/infrastructure/redis"
 	"korun.io/auth-service/internal/domain"
+	"korun.io/auth-service/internal/infrastructure/redis"
 	"korun.io/shared/models"
 )
 

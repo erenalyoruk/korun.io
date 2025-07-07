@@ -53,8 +53,6 @@ type RefreshRequest struct {
 	RefreshToken string `json:"refresh_token" binding:"required"`
 }
 
-
-
 var (
 	ErrRefreshTokenNotFound = errors.New("refresh token not found")
 	ErrTokenAlreadyRevoked  = errors.New("token already revoked")

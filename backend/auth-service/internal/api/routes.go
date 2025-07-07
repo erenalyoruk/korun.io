@@ -4,8 +4,8 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"korun.io/auth-service/internal/config"
 	"korun.io/auth-service/internal/application"
+	"korun.io/auth-service/internal/config"
 )
 
 func SetupRoutes(authService *application.AuthService, serverConfig *config.ServerConfig) *gin.Engine {
