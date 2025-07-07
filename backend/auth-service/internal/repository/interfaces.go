@@ -17,6 +17,6 @@ type AuthRepository interface {
 type RefreshTokenRepository interface {
 	CreateToken(ctx context.Context, token *models.RefreshToken) error
 	GetTokenByHash(ctx context.Context, tokenHash string) (*models.RefreshToken, error)
-	RevokeToken(ctx context.Context, tokenID string) error
+	RevokeToken(ctx context.Context, tokenHash string) error
 	RevokeTokensForAccount(ctx context.Context, accountID string) error
 }

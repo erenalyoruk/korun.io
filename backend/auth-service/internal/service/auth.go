@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
-	"korun.io/auth-service/internal/config"
 	"korun.io/auth-service/internal/repository"
 	"korun.io/auth-service/internal/validators"
+	sharedConfig "korun.io/shared/config"
 	"korun.io/shared/events"
 	"korun.io/shared/messaging"
 	"korun.io/shared/models"
@@ -25,20 +25,20 @@ type AuthService struct {
 	accountRepo  repository.AuthRepository
 	tokenService *TokenService
 	producer     messaging.Producer
-	topicConfig  *config.KafkaTopicsConfig
+	infraConfig  *sharedConfig.InfrastructureConfig
 }
 
 func NewAuthService(
 	accountRepo repository.AuthRepository,
 	tokenService *TokenService,
 	producer messaging.Producer,
-	topicConfig *config.KafkaTopicsConfig,
+	infraConfig *sharedConfig.InfrastructureConfig,
 ) *AuthService {
 	return &AuthService{
 		accountRepo:  accountRepo,
 		tokenService: tokenService,
 		producer:     producer,
-		topicConfig:  topicConfig,
+		infraConfig:  infraConfig,
 	}
 }
 
@@ -137,8 +137,6 @@ func (s *AuthService) RefreshToken(ctx context.Context, req *models.RefreshReque
 	}
 
 	if oldToken.IsRevoked() {
-		// Token has been used before, which could indicate a token theft attempt.
-		// As a security measure, we revoke all tokens for the user.
 		slog.Warn("Attempted to use a revoked refresh token", "account_id", oldToken.AccountID)
 		if err := s.tokenService.RevokeTokensForAccount(ctx, oldToken.AccountID); err != nil {
 			slog.Error("Failed to revoke tokens for account after detecting token reuse", "error", err, "account_id", oldToken.AccountID)
@@ -146,7 +144,7 @@ func (s *AuthService) RefreshToken(ctx context.Context, req *models.RefreshReque
 		return nil, models.ErrInvalidRefreshToken
 	}
 
-	if err := s.tokenService.refreshTokenRepo.RevokeToken(ctx, oldToken.ID); err != nil {
+	if err := s.tokenService.refreshTokenRepo.RevokeToken(ctx, oldToken.TokenHash); err != nil {
 		slog.Error("Failed to revoke old refresh token during refresh flow", "error", err, "token_id", oldToken.ID)
 		return nil, fmt.Errorf("failed to revoke old refresh token: %w", err)
 	}
@@ -198,7 +196,7 @@ func (s *AuthService) publishAccountRegisteredEvent(ctx context.Context, account
 
 	event := events.NewEvent(events.AccountRegisteredEvent, "auth-service", eventData)
 
-	if err := s.producer.PublishEvent(ctx, s.topicConfig.AuthEvents, event); err != nil {
+	if err := s.producer.PublishEvent(ctx, s.infraConfig.Kafka.AuthEvents, event); err != nil {
 		slog.Error("Failed to publish account registered event", "error", err)
 	}
 }
@@ -212,7 +210,7 @@ func (s *AuthService) publishAccountLoggedInEvent(ctx context.Context, account *
 
 	event := events.NewEvent(events.AccountLoggedInEvent, "auth-service", eventData)
 
-	if err := s.producer.PublishEvent(ctx, s.topicConfig.AuthEvents, event); err != nil {
+	if err := s.producer.PublishEvent(ctx, s.infraConfig.Kafka.AuthEvents, event); err != nil {
 		slog.Error("Failed to publish account logged in event", "error", err)
 	}
 }

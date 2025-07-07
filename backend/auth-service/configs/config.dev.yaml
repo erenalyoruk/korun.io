@@ -24,6 +24,20 @@ jwt:
   access_token_ttl: 15m
   refresh_token_ttl: 168h # 7 days
 
-kafka:
-  topics:
-    auth_events: auth.events
+infra:
+  kafka:
+    brokers:
+      - kafka:29092
+    auth_events: auth_events_topic
+    retry_attempts: 3
+    retry_backoff: 2s
+
+  redis:
+    host: redis
+    port: 6379
+    password:
+    db: 0
+
+  logger:
+    level: debug
+    format: json

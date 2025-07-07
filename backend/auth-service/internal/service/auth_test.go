@@ -11,6 +11,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"korun.io/auth-service/internal/config"
 	"korun.io/auth-service/internal/service"
+	sharedConfig "korun.io/shared/config"
 	"korun.io/shared/events"
 	"korun.io/shared/models"
 )
@@ -58,8 +59,8 @@ func (m *MockRefreshTokenRepository) GetTokenByHash(ctx context.Context, tokenHa
 	return args.Get(0).(*models.RefreshToken), args.Error(1)
 }
 
-func (m *MockRefreshTokenRepository) RevokeToken(ctx context.Context, tokenID string) error {
-	args := m.Called(ctx, tokenID)
+func (m *MockRefreshTokenRepository) RevokeToken(ctx context.Context, tokenHash string) error {
+	args := m.Called(ctx, tokenHash)
 	return args.Error(0)
 }
 
@@ -83,6 +84,7 @@ func (m *MockKafkaProducer) Close() error {
 }
 
 func TestAuthService_Register(t *testing.T) {
+	// setup mocks
 	mockAccountRepo := new(MockAuthRepository)
 	mockRefreshTokenRepo := new(MockRefreshTokenRepository)
 	mockProducer := new(MockKafkaProducer)
@@ -93,12 +95,16 @@ func TestAuthService_Register(t *testing.T) {
 		RefreshTokenTTL: time.Hour * 24 * 7,
 	}
 
-	topicConfig := &config.KafkaTopicsConfig{
-		AuthEvents: "auth_events",
+	// setup kafka topics config
+	infraConfig := &sharedConfig.InfrastructureConfig{
+		Kafka: sharedConfig.KafkaConfig{
+			AuthEvents: "auth_events_topic",
+		},
 	}
 
+	// setup services
 	tokenService := service.NewTokenService(mockRefreshTokenRepo, jwtConfig)
-	authService := service.NewAuthService(mockAccountRepo, tokenService, mockProducer, topicConfig)
+	authService := service.NewAuthService(mockAccountRepo, tokenService, mockProducer, infraConfig)
 
 	ctx := context.Background()
 
@@ -112,7 +118,7 @@ func TestAuthService_Register(t *testing.T) {
 		mockAccountRepo.On("GetAccountByEmail", ctx, req.Email).Return(&models.Account{}, models.ErrAccountNotFound).Once()
 		mockAccountRepo.On("CreateAccount", ctx, mock.AnythingOfType("*models.Account")).Return(nil).Once()
 		mockRefreshTokenRepo.On("CreateToken", ctx, mock.AnythingOfType("*models.RefreshToken")).Return(nil).Once()
-		mockProducer.On("PublishEvent", ctx, topicConfig.AuthEvents, mock.Anything).Return(nil).Once()
+		mockProducer.On("PublishEvent", ctx, infraConfig.Kafka.AuthEvents, mock.Anything).Return(nil).Once()
 
 		res, err := authService.Register(ctx, req)
 
@@ -186,7 +192,7 @@ func TestAuthService_Register(t *testing.T) {
 }
 
 func TestAuthService_Login(t *testing.T) {
-	// Setup mocks
+	// setup mocks
 	mockAccountRepo := new(MockAuthRepository)
 	mockRefreshTokenRepo := new(MockRefreshTokenRepository)
 	mockProducer := new(MockKafkaProducer)
@@ -197,12 +203,15 @@ func TestAuthService_Login(t *testing.T) {
 		RefreshTokenTTL: time.Hour * 24 * 7,
 	}
 
-	topicConfig := &config.KafkaTopicsConfig{
-		AuthEvents: "auth_events",
+	// setup kafka topics config
+	infraConfig := &sharedConfig.InfrastructureConfig{
+		Kafka: sharedConfig.KafkaConfig{
+			AuthEvents: "auth_events_topic",
+		},
 	}
 
 	tokenService := service.NewTokenService(mockRefreshTokenRepo, jwtConfig)
-	authService := service.NewAuthService(mockAccountRepo, tokenService, mockProducer, topicConfig)
+	authService := service.NewAuthService(mockAccountRepo, tokenService, mockProducer, infraConfig)
 
 	ctx := context.Background()
 
@@ -228,7 +237,7 @@ func TestAuthService_Login(t *testing.T) {
 
 		mockAccountRepo.On("GetAccountByEmail", ctx, req.Email).Return(existingAccount, nil).Once()
 		mockRefreshTokenRepo.On("CreateToken", ctx, mock.AnythingOfType("*models.RefreshToken")).Return(nil).Once()
-		mockProducer.On("PublishEvent", ctx, topicConfig.AuthEvents, mock.Anything).Return(nil).Once()
+		mockProducer.On("PublishEvent", ctx, infraConfig.Kafka.AuthEvents, mock.Anything).Return(nil).Once()
 
 		res, err := authService.Login(ctx, req, clientIP, userAgent)
 
@@ -325,12 +334,16 @@ func TestAuthService_RefreshToken(t *testing.T) {
 		RefreshTokenTTL: time.Hour * 24 * 7,
 	}
 
-	topicConfig := &config.KafkaTopicsConfig{
-		AuthEvents: "auth_events",
+	// setup kafka topics config
+	infraConfig := &sharedConfig.InfrastructureConfig{
+		Kafka: sharedConfig.KafkaConfig{
+			AuthEvents: "auth_events_topic",
+		},
 	}
 
+	// setup services
 	tokenService := service.NewTokenService(mockRefreshTokenRepo, jwtConfig)
-	authService := service.NewAuthService(mockAccountRepo, tokenService, mockProducer, topicConfig)
+	authService := service.NewAuthService(mockAccountRepo, tokenService, mockProducer, infraConfig)
 
 	ctx := context.Background()
 
@@ -351,7 +364,7 @@ func TestAuthService_RefreshToken(t *testing.T) {
 		existingAccount := &models.Account{ID: accountID, Email: "test@example.com"}
 
 		mockRefreshTokenRepo.On("GetTokenByHash", ctx, tokenService.HashToken(refreshTokenString)).Return(oldRefreshToken, nil).Once()
-		mockRefreshTokenRepo.On("RevokeToken", ctx, oldRefreshToken.ID).Return(nil).Once()
+		mockRefreshTokenRepo.On("RevokeToken", ctx, oldRefreshToken.TokenHash).Return(nil).Once()
 		mockAccountRepo.On("GetAccountByID", ctx, accountID).Return(existingAccount, nil).Once()
 		mockRefreshTokenRepo.On("CreateToken", ctx, mock.AnythingOfType("*models.RefreshToken")).Return(nil).Once()
 
@@ -456,12 +469,14 @@ func TestAuthService_Logout(t *testing.T) {
 		RefreshTokenTTL: time.Hour * 24 * 7,
 	}
 
-	topicConfig := &config.KafkaTopicsConfig{
-		AuthEvents: "auth_events",
+	infraConfig := &sharedConfig.InfrastructureConfig{
+		Kafka: sharedConfig.KafkaConfig{
+			AuthEvents: "auth_events_topic",
+		},
 	}
 
 	tokenService := service.NewTokenService(mockRefreshTokenRepo, jwtConfig)
-	authService := service.NewAuthService(mockAccountRepo, tokenService, mockProducer, topicConfig)
+	authService := service.NewAuthService(mockAccountRepo, tokenService, mockProducer, infraConfig)
 
 	ctx := context.Background()
 

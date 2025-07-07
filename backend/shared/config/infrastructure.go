@@ -9,27 +9,28 @@ import (
 )
 
 type InfrastructureConfig struct {
-	Kafka  KafkaConfig
-	Redis  RedisConfig
-	Logger LoggerConfig
+	Kafka  KafkaConfig  `mapstructure:"kafka"`
+	Redis  RedisConfig  `mapstructure:"redis"`
+	Logger LoggerConfig `mapstructure:"logger"`
 }
 
 type KafkaConfig struct {
-	Brokers       []string
+	Brokers       []string      `mapstructure:"brokers"`
+	AuthEvents    string        `mapstructure:"auth_events"`
 	RetryAttempts int           `mapstructure:"retry_attempts"`
 	RetryBackoff  time.Duration `mapstructure:"retry_backoff"`
 }
 
 type RedisConfig struct {
-	Host     string
-	Port     int
-	Password string
-	DB       int
+	Host     string `mapstructure:"host"`
+	Port     int    `mapstructure:"port"`
+	Password string `mapstructure:"password"`
+	DB       int    `mapstructure:"db"`
 }
 
 type LoggerConfig struct {
-	Level  string
-	Format string
+	Level  string `mapstructure:"level"`
+	Format string `mapstructure:"format"`
 }
 
 func LoadInfrastructureConfig() (*InfrastructureConfig, error) {
@@ -41,6 +42,7 @@ func LoadInfrastructureConfig() (*InfrastructureConfig, error) {
 	viper.SetDefault("kafka.brokers", []string{"localhost:9092"})
 	viper.SetDefault("kafka.retry_attempts", 3)
 	viper.SetDefault("kafka.retry_backoff", "1s")
+	viper.SetDefault("kafka.auth_events", "auth_events_topic")
 	viper.SetDefault("redis.host", "localhost")
 	viper.SetDefault("redis.port", 6379)
 	viper.SetDefault("logger.level", "info")
