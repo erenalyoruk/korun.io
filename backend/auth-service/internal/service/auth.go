@@ -24,14 +24,14 @@ var (
 type AuthService struct {
 	accountRepo  repository.AuthRepository
 	tokenService *TokenService
-	producer     *messaging.KafkaProducer
+	producer     messaging.Producer
 	topicConfig  *config.KafkaTopicsConfig
 }
 
 func NewAuthService(
 	accountRepo repository.AuthRepository,
 	tokenService *TokenService,
-	producer *messaging.KafkaProducer,
+	producer messaging.Producer,
 	topicConfig *config.KafkaTopicsConfig,
 ) *AuthService {
 	return &AuthService{
@@ -171,17 +171,12 @@ func (s *AuthService) RefreshToken(ctx context.Context, req *models.RefreshReque
 	}, nil
 }
 
-func (s *AuthService) Logout(ctx context.Context, req *models.LogoutRequest) error {
-	claims, err := s.tokenService.ValidateAccessToken(req.AccessToken)
-	if err != nil {
-		return fmt.Errorf("failed to validate access token: %w", err)
-	}
-
-	if err := s.tokenService.RevokeTokensForAccount(ctx, claims.AccountID); err != nil {
+func (s *AuthService) Logout(ctx context.Context, accountID string) error {
+	if err := s.tokenService.RevokeTokensForAccount(ctx, accountID); err != nil {
 		return fmt.Errorf("failed to revoke tokens for account: %w", err)
 	}
 
-	slog.Info("User logged out successfully", "account_id", claims.AccountID)
+	slog.Info("User logged out successfully", "account_id", accountID)
 	return nil
 }
 

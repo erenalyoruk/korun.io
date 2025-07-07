@@ -2,19 +2,21 @@ FROM golang:1.24-alpine AS builder
 
 WORKDIR /app
 
-COPY ./go.work .
+# Copy go.work and all go.mod/go.sum files first
+COPY go.work .
+COPY auth-service/go.mod ./auth-service/
+COPY auth-service/go.sum ./auth-service/
+COPY shared/go.mod ./shared/
+COPY shared/go.sum ./shared/
 
-COPY ./auth-service/go.mod ./auth-service/go.mod
-COPY ./auth-service/go.sum ./auth-service/go.sum
+# Sync the workspace and download all dependencies
+RUN go work sync
 
-COPY ./shared/go.mod ./shared/go.mod
-COPY ./shared/go.sum ./shared/go.sum
+# Copy the rest of the source code
+COPY auth-service ./auth-service
+COPY shared ./shared
 
-RUN go mod download
-
-COPY ./auth-service ./auth-service
-COPY ./shared ./shared
-
+# Build the auth-service
 RUN CGO_ENABLED=0 GOOS=linux go build -o ./service ./auth-service/cmd/main.go
 
 FROM alpine:latest
@@ -24,7 +26,7 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /root
 
 COPY --from=builder /app/service .
-COPY ./auth-service/configs ./configs
+COPY auth-service/configs ./configs
 
 EXPOSE 8081
 

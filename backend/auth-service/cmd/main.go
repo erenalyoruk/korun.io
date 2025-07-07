@@ -51,7 +51,7 @@ func main() {
 	tokenService := service.NewTokenService(tokenRepo, &cfg.JWT)
 	authService := service.NewAuthService(accountRepo, tokenService, producer, &cfg.Kafka)
 
-	router := api.SetupRoutes(authService)
+	router := api.SetupRoutes(authService, &cfg.Server)
 
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.Server.Port),

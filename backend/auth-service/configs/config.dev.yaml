@@ -1,8 +1,11 @@
 server:
   port: 8081
-  read_timeout: 10s
+  read_timeout: 5s
   write_timeout: 10s
-  idle_timeout: 60s
+  idle_timeout: 120s
+  cors_allowed_origins:
+    - "http://localhost:3000"
+    - "http://localhost:8080"
 
 database:
   host: postgres

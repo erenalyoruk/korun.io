@@ -53,9 +53,7 @@ type RefreshRequest struct {
 	RefreshToken string `json:"refresh_token" binding:"required"`
 }
 
-type LogoutRequest struct {
-	AccessToken string `json:"access_token" binding:"required"`
-}
+
 
 var (
 	ErrRefreshTokenNotFound = errors.New("refresh token not found")

@@ -11,6 +11,11 @@ import (
 	"korun.io/shared/events"
 )
 
+type Producer interface {
+	PublishEvent(ctx context.Context, topic string, event *events.Event) error
+	Close() error
+}
+
 type KafkaProducer struct {
 	producer sarama.SyncProducer
 }

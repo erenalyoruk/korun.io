@@ -95,15 +95,14 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 }
 
 func (h *AuthHandler) Logout(c *gin.Context) {
-	var req models.LogoutRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	accountID := c.Param("id")
+	if accountID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "account ID is required"})
 		return
 	}
 
-	err := h.authService.Logout(c.Request.Context(), &req)
-	if err != nil {
-		slog.Error("Logout failed", "error", err)
+	if err := h.authService.Logout(c.Request.Context(), accountID); err != nil {
+		slog.Error("Logout failed", "error", err, "account_id", accountID)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to logout"})
 		return
 	}

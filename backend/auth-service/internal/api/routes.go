@@ -1,19 +1,33 @@
 package api
 
 import (
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"korun.io/auth-service/internal/config"
 	"korun.io/auth-service/internal/service"
 )
 
-func SetupRoutes(authService *service.AuthService) *gin.Engine {
-	router := gin.Default()
+func SetupRoutes(authService *service.AuthService, serverConfig *config.ServerConfig) *gin.Engine {
+	router := gin.New()
 
-	router.Use(gin.Recovery())
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowOrigins = serverConfig.CORSAllowedOrigins
+	corsConfig.AllowCredentials = true
+	corsConfig.AddAllowHeaders("Authorization")
+	router.Use(cors.New(corsConfig))
+
 	router.Use(gin.Logger())
+	router.Use(gin.Recovery())
+
+	router.Use(MetricsMiddleware())
+
+	router.Use(RateLimiter())
 
 	authHandler := NewAuthHandler(authService)
 
 	router.GET("/health", authHandler.HealthCheck)
+	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 	v1 := router.Group("/api/v1")
 	{
@@ -22,7 +36,7 @@ func SetupRoutes(authService *service.AuthService) *gin.Engine {
 			auth.POST("/register", authHandler.Register)
 			auth.POST("/login", authHandler.Login)
 			auth.POST("/refresh", authHandler.Refresh)
-			auth.POST("/logout", authHandler.Logout)
+			auth.POST("/:id/logout", authHandler.Logout)
 		}
 	}
 
