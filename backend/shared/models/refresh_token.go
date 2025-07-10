@@ -11,15 +11,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// Token Errors
-var (
-	ErrInvalidAccessToken   = &Error{Code: "T001", Message: "invalid access token"}
-	ErrInvalidRefreshToken  = &Error{Code: "T002", Message: "invalid refresh token"}
-	ErrRefreshTokenNotFound = &Error{Code: "T003", Message: "refresh token not found"}
-	ErrTokenExpired         = &Error{Code: "T004", Message: "token has expired"}
-	ErrTokenAlreadyRevoked  = &Error{Code: "T005", Message: "token already revoked"}
-)
-
 type RefreshToken struct {
 	ID        string      `json:"id" db:"id"`
 	AccountID string      `json:"account_id" db:"account_id"`
