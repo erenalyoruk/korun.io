@@ -30,7 +30,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	routes := api.SetupRoutes()
+	routes := api.SetupRoutes(logger)
 
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.Server.Port),

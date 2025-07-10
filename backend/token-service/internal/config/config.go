@@ -51,10 +51,15 @@ func LoadConfig(configPath, configName string) (*Config, error) {
 	viper.SetDefault("server.read_timeout", "15s")
 	viper.SetDefault("server.write_timeout", "15s")
 	viper.SetDefault("server.idle_timeout", "60s")
-	viper.SetDefault("token.access_token_secret", "12my_secret_key_34")
-	viper.SetDefault("token.refresh_token_secret", "56my_refresh_secret_78")
 	viper.SetDefault("token.access_token_expires_in", "15m")
 	viper.SetDefault("token.refresh_token_expires_in", "720h")
+
+	if err := viper.BindEnv("token.access_token_secret", "KORUN_TOKEN_ACCESS_TOKEN_SECRET"); err != nil {
+		return nil, fmt.Errorf("failed to bind environment variable for access token secret: %w", err)
+	}
+	if err := viper.BindEnv("token.refresh_token_secret", "KORUN_TOKEN_REFRESH_TOKEN_SECRET"); err != nil {
+		return nil, fmt.Errorf("failed to bind environment variable for refresh token secret: %w", err)
+	}
 
 	var cfg Config
 	if err := viper.Unmarshal(&cfg); err != nil {

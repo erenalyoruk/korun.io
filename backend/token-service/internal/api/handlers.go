@@ -6,7 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type TokenHandler struct{}
+type TokenHandler struct {
+}
 
 func NewTokenHandler() *TokenHandler {
 	return &TokenHandler{}

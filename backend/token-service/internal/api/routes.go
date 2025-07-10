@@ -2,13 +2,14 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
-func SetupRoutes() *gin.Engine {
-	router := gin.Default()
+func SetupRoutes(logger *zap.Logger) *gin.Engine {
+	router := gin.New()
 
-	router.Use(gin.Recovery())
-	router.Use(gin.Logger())
+	router.Use(RequestIDMiddleware(logger))
+	router.Use(ZapLoggerMiddleware())
 
 	tokenHandler := NewTokenHandler()
 
