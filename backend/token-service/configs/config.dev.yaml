@@ -1,0 +1,19 @@
+app:
+  name: token-service
+
+server:
+  port: 8080
+  read_timeout: 15s
+  write_timeout: 15s
+  idle_timeout: 60s
+
+token:
+  access_token_secret: 12my_secret_key_34
+  access_token_expires_in: 15m
+  refresh_token_secret: 34my_refresh_secret_56
+  refresh_token_expires_in: 720h
+
+infra:
+  logger:
+    level: debug
+    format: json

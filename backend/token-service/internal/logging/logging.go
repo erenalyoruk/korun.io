@@ -2,34 +2,38 @@ package logging
 
 import (
 	"fmt"
+	"os"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"korun.io/shared/config"
 )
 
-func NewLogger(cfg config.LoggerConfig) (*zap.Logger, error) {
-	var zapConfig zap.Config
+func NewLogger(levelStr, format string) (*zap.Logger, error) {
+	var level zapcore.Level
+	if err := level.UnmarshalText([]byte(levelStr)); err != nil {
+		level = zap.InfoLevel
+		fmt.Fprintf(os.Stderr, "Invalid log level '%s', defaulting to 'info': %v\n", levelStr, err)
+	}
 
-	switch cfg.Format {
+	encoderConfig := zap.NewProductionEncoderConfig()
+	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+
+	var encoder zapcore.Encoder
+	switch format {
 	case "json":
-		zapConfig = zap.NewProductionConfig()
+		encoder = zapcore.NewJSONEncoder(encoderConfig)
 	case "console":
-		zapConfig = zap.NewDevelopmentConfig()
+		encoder = zapcore.NewConsoleEncoder(encoderConfig)
 	default:
-		return nil, fmt.Errorf("unknown logger format: %s", cfg.Format)
+		return nil, fmt.Errorf("unsupported log format: %s", format)
 	}
 
-	level, err := zapcore.ParseLevel(cfg.Level)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse log level: %w", err)
-	}
-	zapConfig.Level = zap.NewAtomicLevelAt(level)
+	core := zapcore.NewCore(
+		encoder,
+		zapcore.AddSync(os.Stdout),
+		level,
+	)
 
-	logger, err := zapConfig.Build()
-	if err != nil {
-		return nil, fmt.Errorf("failed to build logger: %w", err)
-	}
-
-	return logger, nil
+	return zap.New(core, zap.AddCaller(), zap.AddStacktrace(zap.ErrorLevel)), nil
 }
